@@ -94,3 +94,47 @@ function _my_node_installed_instances() {
 
   return $instances;
 }
+
+/**
+ * Implements hook_theme().
+ */
+function my_node_theme($existing, $type, $theme, $path) {
+  $theme = [];
+
+  $templates_path = drupal_get_path('module', 'my_node') . '/templates';
+
+  $theme['node__my_node'] = [
+    'render element' => 'content',
+    'base hook' => 'node',
+    'template' => 'node--my-node',
+    'path' => $templates_path,
+  ];
+  $theme['node__my_node__teaser__odd'] = [
+    'render element' => 'content',
+    'base hook' => 'node',
+    'template' => 'node--my-node--teaser--odd',
+    'path' => $templates_path,
+  ];
+  $theme['node__my_node__teaser__even'] = [
+    'render element' => 'content',
+    'base hook' => 'node',
+    'template' => 'node--my-node--teaser--even',
+    'path' => $templates_path,
+  ];
+
+  return $theme;
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function my_node_preprocess_node(&$vars) {
+  if (isset($vars['node']->type) && $vars['node']->type == MY_NODE_CT_NAME && $vars['view_mode'] == 'teaser') {
+    $suffix = &drupal_static(__FUNCTION__);
+    $suffix = $suffix != 'odd' ? 'odd' : 'even';
+
+    $vars['theme_hook_suggestions'][] = 'node__' . MY_NODE_CT_NAME .  '__' . $vars['view_mode'] . '__' . $suffix;
+
+    drupal_add_css(drupal_get_path('module', 'my_node') . '/css/my_node.css');
+  }
+}

@@ -138,3 +138,69 @@ function my_node_preprocess_node(&$vars) {
     drupal_add_css(drupal_get_path('module', 'my_node') . '/css/my_node.css');
   }
 }
+
+
+/**
+ * Implements hook_block_info().
+ */
+function my_node_block_info() {
+  return [
+    MY_NODE_CT_NAME . '_last_three' => [
+      'info' => t('Last three items of My Nodes content'),
+      'region' => 'sidebar_first',
+      'status' => TRUE,
+    ]
+  ];
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function my_node_block_view($delta = '') {
+  $block = [];
+
+  switch ($delta) {
+    case MY_NODE_CT_NAME . '_last_three':
+      $block['subject'] = t('Last My Nodes');
+
+      if ($items = my_node_last_items_content()) {
+        $block['content'] = [
+          '#theme' => 'item_list',
+          '#items' => $items,
+        ];
+      }
+      else {
+        $block['content'] = t('No data yet.');
+      }
+
+      break;
+  }
+
+  return $block;
+}
+
+/**
+ * Get latest nodes list of My Node content type
+ *
+ * @param int $count
+ *   List items count.
+ *
+ * @return array
+ *   List items as links to nodes.
+ */
+function my_node_last_items_content($count = 3) {
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid', 'title'))
+    ->condition('n.type', MY_NODE_CT_NAME)
+    ->orderBy('n.created', 'DESC')
+    ->range(0, $count)
+    ->execute()
+    ->fetchAllKeyed();
+
+  $items = [];
+  foreach ($result as $nid => $title) {
+    $items[] = l($title, 'node/' . $nid);
+  }
+
+  return $items;
+}

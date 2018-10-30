@@ -6,3 +6,91 @@
  *
  * @author Yurii Lytvynchuk
  */
+
+const MY_NODE_CT_NAME = 'my_node';
+
+/**
+ * Implements hook_node_info().
+ */
+function my_node_node_info() {
+  return [
+    MY_NODE_CT_NAME => [
+      'name' => t('My Node'),
+      'base' => MY_NODE_CT_NAME,
+      'description' => t('This is custom node type My Node.'),
+    ],
+  ];
+}
+
+/**
+ * Implements hook_form().
+ */
+function my_node_form($node, $form_state) {
+  return node_content_form($node, $form_state);
+}
+
+/**
+ * Implements hook_node_type_insert().
+ */
+function my_node_node_type_insert($content_type) {
+  if ($content_type->type == MY_NODE_CT_NAME) {
+    // Add the body field.
+    $body_instance = node_add_body_field($content_type);
+
+    // Save changes to the body field instance.
+    field_update_instance($body_instance);
+
+    // Create all the fields we are adding to our content type.
+    foreach (_my_node_installed_fields() as $field) {
+      field_create_field($field);
+    }
+
+    // Create all the instances for our fields.
+    foreach (_my_node_installed_instances() as $instance) {
+      $instance['entity_type'] = 'node';
+      $instance['bundle'] = MY_NODE_CT_NAME;
+      field_create_instance($instance);
+    }
+  }
+}
+
+/**
+ * Define the fields for the my_node content type.
+ *
+ * @return array
+ *   An associative array specifying the fields.
+ */
+function _my_node_installed_fields() {
+  $fields = [];
+
+  if (module_exists('link')) {
+    $fields[MY_NODE_CT_NAME . '_link'] = [
+      'type' => 'link_field',
+      'field_name' => MY_NODE_CT_NAME . '_link',
+    ];
+  }
+
+  return $fields;
+}
+
+/**
+ * Define the field instances for the my_node content type.
+ *
+ * @return array
+ *   An associative array specifying fields instances.
+ */
+function _my_node_installed_instances() {
+  $instances = [];
+
+  if (module_exists('link')) {
+    $instances[MY_NODE_CT_NAME . '_link'] = [
+      'field_name' => MY_NODE_CT_NAME . '_link',
+      'label' => t('Link'),
+      'widget' => [
+        'type' => 'link_field',
+      ],
+    ];
+  }
+
+  return $instances;
+}

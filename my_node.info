@@ -1,6 +1,10 @@
-name = My node
+name = My Node
 description = "Middle test case by Lemberg Solution"
 core = 7.x
 package = Lemberg
 
 files[] = my_node.module
+files[] = my_node.install
+
+dependencies[] = link
+dependencies[] = views

@@ -1,0 +1,33 @@
+<?php
+
+/**
+ * @file
+ * Installation and cleanup of the module.
+ *
+ * @author Yurii Lytvynchuk
+ */
+
+/**
+ * Implements hook_install().
+ */
+function my_node_install() {
+  node_types_rebuild();
+  $types = node_type_get_types();
+  if (isset($types['my_node'])) {
+    node_add_body_field($types['my_node']);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function my_node_uninstall() {
+  $nids = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('n.type', 'my_node')
+    ->execute()
+    ->fetchCol();
+
+  node_delete_multiple($nids);
+  node_type_delete('my_node');
+}

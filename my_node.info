@@ -1,0 +1,6 @@
+name = My node
+description = "Middle test case by Lemberg Solution"
+core = 7.x
+package = Lemberg
+
+files[] = my_node.module

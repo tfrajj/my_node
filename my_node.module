@@ -163,10 +163,15 @@ function my_node_block_view($delta = '') {
     case MY_NODE_CT_NAME . '_last_three':
       $block['subject'] = t('Last My Nodes');
 
-      if ($items = my_node_last_items_content()) {
+      if ($items = my_node_last_items_content(3)) {
+        $links_list = [];
+        foreach ($items as $nid => $title) {
+          $links_list[] = l($title, 'node/' . $nid);
+        }
+
         $block['content'] = [
           '#theme' => 'item_list',
-          '#items' => $items,
+          '#items' => $links_list,
         ];
       }
       else {
@@ -180,29 +185,25 @@ function my_node_block_view($delta = '') {
 }
 
 /**
- * Get latest nodes list of My Node content type
+ * Get latest nodes list of My Node content type.
  *
- * @param int $count
- *   List items count.
+ * @param mixed $count
+ *   Result items count. Unlimited in case empty passed.
  *
  * @return array
  *   List items as links to nodes.
  */
-function my_node_last_items_content($count = 3) {
-  $result = db_select('node', 'n')
+function my_node_last_items_content($count = NULL) {
+  $query = db_select('node', 'n')
     ->fields('n', array('nid', 'title'))
     ->condition('n.type', MY_NODE_CT_NAME)
-    ->orderBy('n.created', 'DESC')
-    ->range(0, $count)
-    ->execute()
-    ->fetchAllKeyed();
+    ->orderBy('n.created', 'DESC');
 
-  $items = [];
-  foreach ($result as $nid => $title) {
-    $items[] = l($title, 'node/' . $nid);
+  if (!empty($count) && is_numeric($count)) {
+    $query->range(0, $count);
   }
 
-  return $items;
+  return $query->execute()->fetchAllKeyed();
 }
 
 /*
@@ -221,4 +222,19 @@ function my_node_block_info_alter(&$blocks, $theme, $code_blocks) {
     $blocks['views']['last_my_nodes_via_views-block']['region'] = 'sidebar_first';
     $blocks['views']['last_my_nodes_via_views-block']['status'] = TRUE;
   }
+}
+
+/**
+ * Implements hook_webform_select_options_info().
+ */
+function my_node_webform_select_options_info() {
+  $items = array();
+
+  $items['my_nodes'] = array(
+    'title' => t('Nodes of My Node content type'),
+    'options callback' => 'my_node_webform_options',
+    'file' => 'includes/my_node_webform.options.inc',
+  );
+
+  return $items;
 }
